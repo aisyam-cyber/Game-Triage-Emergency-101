@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMO Terengganu - Triage Emergency 101</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { text-align: center; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 15px; }
+    h1 { font-size: 22px; color: #38bdf8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); margin-bottom: 4px; }
+    p.sub { font-size: 13px; color: #94a3b8; margin-bottom: 15px; }
+
+    /* DASHBOARD MASA & SKOR */
+    .dashboard { display: flex; justify-content: space-around; width: 320px; background: #1e293b; padding: 10px; border-radius: 10px; border: 1px solid #38bdf8; margin-bottom: 15px; }
+    .dash-box { font-size: 14px; font-weight: bold; }
+    .dash-box span { font-size: 18px; color: #facc15; }
+
+    /* KOTAK KES PESAKIT */
+    .case-box { width: 320px; height: 160px; background: #1e293b; border: 3px solid #0284c7; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 15px; position: relative; }
+    .case-icon { font-size: 36px; margin-bottom: 8px; }
+    .case-text { font-size: 16px; font-weight: bold; color: #f8fafc; line-height: 1.3; }
+
+    /* BUTANG ZON TRIAGE */
+    .triage-btns { display: flex; flex-direction: column; gap: 10px; width: 320px; }
+    .btn-zone { padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; color: white; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .btn-zone:active { transform: scale(0.97); }
+    .btn-red { background: linear-gradient(135deg, #dc2626, #991b1b); border: 1px solid #f87171; }
+    .btn-yellow { background: linear-gradient(135deg, #d97706, #92400e); border: 1px solid #fbbf24; }
+    .btn-green { background: linear-gradient(135deg, #16a34a, #15803d); border: 1px solid #4ade80; }
+
+    /* BUTANG UTAMA */
+    .btn-start { width: 320px; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.4); }
+    .btn-view-all { width: 320px; padding: 12px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: 1px solid #38bdf8; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 10px; }
+
+    /* BORANG SKOR DINAMIK */
+    .form-container { margin-top: 15px; background: #1e293b; padding: 18px; border-radius: 12px; width: 320px; text-align: left; box-shadow: 0 8px 16px rgba(0,0,0,0.4); }
+    label { font-size: 12px; color: #cbd5e0; margin-top: 6px; display: block; }
+    input, select { width: 100%; padding: 9px; margin: 4px 0 8px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 13px; }
+    button.btn-submit { width: 100%; padding: 10px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 5px; }
+    button.btn-retry { width: 100%; padding: 10px; background: #475569; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 8px; }
+
+    /* POP-UP MODAL CARTA PENUH */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 999; justify-content: center; align-items: center; padding: 15px; }
+    .modal-content { background: #1e293b; border: 1px solid #38bdf8; border-radius: 16px; padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .modal-header h3 { color: #facc15; font-size: 17px; }
+    .close-btn { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; font-weight: bold; }
+
+    /* PODIUM TOP 3 TERPERINCI */
+    .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin-bottom: 15px; width: 100%; height: 185px; }
+    .podium { display: flex; flex-direction: column; align-items: center; justify-content: space-between; border-radius: 10px 10px 0 0; padding: 8px 4px; width: 32%; color: #0f172a; font-weight: bold; font-size: 11px; }
+    .podium .score { font-size: 13px; font-weight: 800; background: rgba(255,255,255,0.3); padding: 2px 6px; border-radius: 10px; }
+    .podium .name { font-size: 11px; line-height: 1.2; margin-top: 2px; text-align: center; color: #0f172a; font-weight: 800; word-break: break-word; }
+    .podium .details { font-size: 9px; line-height: 1.1; margin-top: 2px; text-align: center; }
+
+    .rank-1 { height: 170px; background: linear-gradient(135deg, #ffe066, #f59e0b); border: 2px solid #fbbf24; order: 2; }
+    .rank-2 { height: 140px; background: linear-gradient(135deg, #e2e8f0, #94a3b8); border: 2px solid #cbd5e0; order: 1; }
+    .rank-3 { height: 115px; background: linear-gradient(135deg, #fdba74, #b45309); border: 2px solid #f97316; order: 3; color: white; }
+    .rank-3 .name { color: white; }
+
+    .rank-list { text-align: left; background: #0f172a; border-radius: 8px; padding: 8px; overflow-y: auto; flex-grow: 1; max-height: 200px; }
+    .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #1e293b; font-size: 12px; }
+    .rank-num { font-weight: bold; color: #38bdf8; width: 28px; }
+  </style>
+</head>
+<body>
+
+  <h1>🏥 AMO Terengganu: Triage Emergency 101</h1>
+  <p class="sub">Tentukan Zon Kecemasan yang BETUL untuk setiap pesakit!</p>
+
+  <div class="dashboard">
+    <div class="dash-box">Masa: <span id="timeLeft">30</span>s</div>
+    <div class="dash-box">Skor: <span id="score">0</span></div>
+  </div>
+
+  <div class="case-box" id="caseBox">
+    <div class="case-icon" id="caseIcon">🩺</div>
+    <div class="case-text" id="caseText">Tekan "MULA GAME" untuk bertugas di Zon Triage!</div>
+  </div>
+
+  <div class="triage-btns">
+    <button class="btn-zone btn-red" id="btnRed" onclick="checkChoice('RED')" disabled>🔴 ZON MERAH (Kritikal)</button>
+    <button class="btn-zone btn-yellow" id="btnYellow" onclick="checkChoice('YELLOW')" disabled>🟡 ZON KUNING (Separa Kritikal)</button>
+    <button class="btn-zone btn-green" id="btnGreen" onclick="checkChoice('GREEN')" disabled>🟢 ZON HIJAU (Bukan Kecemasan)</button>
+  </div>
+
+  <button class="btn-start" id="startBtn" onclick="mulaGame()">MULA GAME ▶️</button>
+  <button class="btn-view-all" onclick="openModal()">📜 Lihat Top 10 Carta Kedudukan</button>
+
+  <!-- BORANG PENDAFTARAN DINAMIK -->
+  <div class="form-container" id="scoreForm" style="display: none;">
+    <h3 style="text-align: center; color: #facc15;">TAMAT SYIFT DUTY!</h3>
+    <p style="text-align: center; font-size: 14px; margin-bottom: 10px;">Skor Akhir: <b id="finalScore" style="font-size: 20px; color: #4ade80;">0</b> pts</p>
+    
+    <label>Nama Penuh / FB:</label>
+    <input type="text" id="nama" placeholder="Ahmad Zaki" required>
+    
+    <label>No. WhatsApp:</label>
+    <input type="tel" id="noTel" placeholder="0139876543" required>
+    
+    <label>Daerah / Negeri Asal:</label>
+    <select id="daerah" onchange="tukarDaerah()" required>
+      <option value="">-- Pilih Daerah / Luar Negeri --</option>
+      <option value="Kuala Terengganu">Kuala Terengganu</option>
+      <option value="Kuala Nerus">Kuala Nerus</option>
+      <option value="Marang">Marang</option>
+      <option value="Hulu Terengganu">Hulu Terengganu</option>
+      <option value="Dungun">Dungun</option>
+      <option value="Kemaman">Kemaman</option>
+      <option value="Besut">Besut</option>
+      <option value="Setiu">Setiu</option>
+      <option value="Luar Terengganu">Luar Terengganu (Taip Negeri/Daerah)</option>
+    </select>
+
+    <div id="boxLuarTerengganu" style="display: none;">
+      <label>Nyatakan Negeri / Daerah Anda:</label>
+      <input type="text" id="daerahLuar" placeholder="Contoh: Kuantan, Pahang / Kota Bharu, Kelantan">
+    </div>
+
+    <label>Kategori:</label>
+    <select id="kategori" onchange="tukarKategori()">
+      <option value="Orang Awam">Orang Awam</option>
+      <option value="Warga KKM">Warga KKM</option>
+    </select>
+
+    <div id="boxJawatan" style="display: none;">
+      <label>Jawatan / Gelaran (Cth: AMO, Jururawat, Doktor, Farmasi):</label>
+      <input type="text" id="jawatan" placeholder="Contoh: Penolong Pegawai Perubatan (AMO)">
+    </div>
+
+    <button class="btn-submit" onclick="hantarSkor()">Hantar Skor 🏆</button>
+    <p id="statusMsg" style="margin-top: 8px; font-size: 12px; text-align: center; font-weight: bold;"></p>
+    
+    <button class="btn-retry" onclick="mulaGame()">🔄 Main Semula / Cuba Lagi</button>
+  </div>
+
+  <!-- POPUP LEADERBOARD TOP 10 -->
+  <div class="modal-overlay" id="leaderboardModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🏆 Carta Top 10 Pemain</h3>
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="podium-container">
+        <div class="podium rank-2">
+          <span>🥈 PERAK</span>
+          <div class="name" id="p2-name">-</div>
+          <div class="details"><span id="p2-daerah">-</span><br><b id="p2-kat">-</b></div>
+          <div class="score" id="p2-score">0 pts</div>
+        </div>
+        <div class="podium rank-1">
+          <span>👑 EMAS</span>
+          <div class="name" id="p1-name">-</div>
+          <div class="details"><span id="p1-daerah">-</span><br><b id="p1-kat">-</b></div>
+          <div class="score" id="p1-score">0 pts</div>
+        </div>
+        <div class="podium rank-3">
+          <span>🥉 GANGSA</span>
+          <div class="name" id="p3-name">-</div>
+          <div class="details"><span id="p3-daerah">-</span><br><b id="p3-kat">-</b></div>
+          <div class="score" id="p3-score">0 pts</div>
+        </div>
+      </div>
+
+      <h4 style="text-align: left; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Kedudukan #4 hingga #10:</h4>
+      <div class="rank-list" id="rankList">
+        <p style="text-align: center; color: #64748b; padding: 15px;">Memuatkan kedudukan...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // PASTE URL GOOGLE APPS SCRIPT ANDA DI SINI
+    const SCRIPT_URL = "https://script.google.com/a/macros/moh.gov.my/s/AKfycbxDVlycGCzMd0mDA2MAERM8N20OSrxouznH80OUZjSaJIvnR1qcm71KQnoEcXbHshNA/exec";
+
+    // SENARAI KES TRIAGE PERUBATAN
+    const cases = [
+      { text: "Pesakit tidak sedarkan diri & tiada nadi!", zone: "RED", icon: "🚨" },
+      { text: "Sesak nafas teruk & muka kebiruan!", zone: "RED", icon: "🫁" },
+      { text: "Kemalangan teruk & pendarahan berterusan!", zone: "RED", icon: "🩸" },
+      { text: "Serangan jantung & sakit dada melampau!", zone: "RED", icon: "💔" },
+      { text: "Patah tulang paha dengan sakit teruk!", zone: "YELLOW", icon: "🦴" },
+      { text: "Luka dalam perlu jahitan tetapi stabil.", zone: "YELLOW", icon: "🩹" },
+      { text: "Demam tinggi dengan sejarah sawan ringan.", zone: "YELLOW", icon: "🤒" },
+      { text: "Sakit perut teruk & muntah berterusan.", zone: "YELLOW", icon: "🤢" },
+      { text: "Demam biasa & selsema 2 hari.", zone: "GREEN", icon: "🤧" },
+      { text: "Sakit kepala ringan tanpa gejala lain.", zone: "GREEN", icon: "🤕" },
+      { text: "Gatal kulit ringan / ruam biasa.", zone: "GREEN", icon: "🩺" },
+      { text: "Luka calar ringan di siku.", zone: "GREEN", icon: "🩹" }
+    ];
+
+    let currentCase = null;
+    let score = 0;
+    let timeLeft = 30;
+    let timerInterval = null;
+    let gameStarted = false;
+
+    function nextCase() {
+      const randomIndex = Math.floor(Math.random() * cases.length);
+      currentCase = cases[randomIndex];
+      document.getElementById("caseIcon").innerText = currentCase.icon;
+      document.getElementById("caseText").innerText = currentCase.text;
+    }
+
+    function checkChoice(selectedZone) {
+      if (!gameStarted) return;
+
+      if (selectedZone === currentCase.zone) {
+        score += 20;
+        document.getElementById("caseBox").style.borderColor = "#4ade80";
+      } else {
+        score = Math.max(0, score - 10);
+        document.getElementById("caseBox").style.borderColor = "#f87171";
+      }
+
+      document.getElementById("score").innerText = score;
+      setTimeout(() => {
+        document.getElementById("caseBox").style.borderColor = "#0284c7";
+      }, 200);
+
+      nextCase();
+    }
+
+    function mulaGame() {
+      score = 0;
+      timeLeft = 30;
+      gameStarted = true;
+      document.getElementById("score").innerText = score;
+      document.getElementById("timeLeft").innerText = timeLeft;
+      document.getElementById("scoreForm").style.display = "none";
+      document.getElementById("startBtn").disabled = true;
+
+      document.getElementById("btnRed").disabled = false;
+      document.getElementById("btnYellow").disabled = false;
+      document.getElementById("btnGreen").disabled = false;
+
+      nextCase();
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timeLeft").innerText = timeLeft;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      gameStarted = false;
+      clearInterval(timerInterval);
+      document.getElementById("startBtn").disabled = false;
+      document.getElementById("btnRed").disabled = true;
+      document.getElementById("btnYellow").disabled = true;
+      document.getElementById("btnGreen").disabled = true;
+
+      document.getElementById("caseIcon").innerText = "🏆";
+      document.getElementById("caseText").innerText = "Syift Tamat! Skor anda: " + score + " pts";
+      document.getElementById("finalScore").innerText = score;
+      document.getElementById("scoreForm").style.display = "block";
+    }
+
+    function tukarDaerah() {
+      let d = document.getElementById("daerah").value;
+      document.getElementById("boxLuarTerengganu").style.display = (d === "Luar Terengganu") ? "block" : "none";
+    }
+
+    function tukarKategori() {
+      let kat = document.getElementById("kategori").value;
+      document.getElementById("boxJawatan").style.display = (kat === "Warga KKM") ? "block" : "none";
+    }
+
+    function openModal() { document.getElementById("leaderboardModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("leaderboardModal").style.display = "none"; }
+
+    function loadLeaderboard() {
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+          if (!data || data.length === 0) return;
+
+          if (data[0]) { document.getElementById("p1-name").innerText = data[0].nama; document.getElementById("p1-daerah").innerText = data[0].daerah || "-"; document.getElementById("p1-kat").innerText = (data[0].kategori === "Warga KKM") ? data[0].jawatan : "Orang Awam"; document.getElementById("p1-score").innerText = data[0].score + " pts"; }
+          if (data[1]) { document.getElementById("p2-name").innerText = data[1].nama; document.getElementById("p2-daerah").innerText = data[1].daerah || "-"; document.getElementById("p2-kat").innerText = (data[1].kategori === "Warga KKM") ? data[1].jawatan : "Orang Awam"; document.getElementById("p2-score").innerText = data[1].score + " pts"; }
+          if (data[2]) { document.getElementById("p3-name").innerText = data[2].nama; document.getElementById("p3-daerah").innerText = data[2].daerah || "-"; document.getElementById("p3-kat").innerText = (data[2].kategori === "Warga KKM") ? data[2].jawatan : "Orang Awam"; document.getElementById("p3-score").innerText = data[2].score + " pts"; }
+
+          let rankListHTML = "";
+          for (let i = 3; i < data.length; i++) {
+            let labelJawatan = (data[i].kategori === "Warga KKM") ? data[i].jawatan : "Awam";
+            rankListHTML += `
+              <div class="rank-item">
+                <span class="rank-num">#${i + 1}</span>
+                <span><b>${data[i].nama}</b> (${data[i].daerah || 'Luar Terengganu'}) - <i style="font-size:11px; color:#cbd5e0;">${labelJawatan}</i></span>
+                <span style="color: #facc15; font-weight: bold;">${data[i].score} pts</span>
+              </div>
+            `;
+          }
+          document.getElementById("rankList").innerHTML = rankListHTML || "<p style='text-align:center; color:#64748b; padding:10px;'>Tiada data tambahan lagi.</p>";
+        })
+        .catch(err => console.error("Error loading leaderboard:", err));
+    }
+
+    function hantarSkor() {
+      let nama = document.getElementById("nama").value;
+      let noTel = document.getElementById("noTel").value;
+      let daerahSelect = document.getElementById("daerah").value;
+      let daerahLuar = document.getElementById("daerahLuar").value;
+      let kategori = document.getElementById("kategori").value;
+      let jawatan = document.getElementById("jawatan").value;
+      let statusMsg = document.getElementById("statusMsg");
+
+      let daerahFinal = daerahSelect;
+      if (daerahSelect === "Luar Terengganu") {
+        if (!daerahLuar) {
+          alert("Sila nyatakan Negeri/Daerah asal anda!");
+          return;
+        }
+        daerahFinal = daerahLuar;
+      }
+
+      if (!nama || !noTel || !daerahSelect) {
+        alert("Sila isi Nama, No. WhatsApp, dan Pilih Daerah!");
+        return;
+      }
+
+      if (kategori === "Warga KKM" && !jawatan) {
+        alert("Sila nyatakan jawatan anda!");
+        return;
+      }
+
+      statusMsg.style.color = "#facc15";
+      statusMsg.innerText = "Menghantar data...";
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nama: nama, noTel: noTel, daerah: daerahFinal, kategori: kategori, jawatan: jawatan, score: score })
+      })
+      .then(() => {
+        statusMsg.style.color = "#4ade80";
+        statusMsg.innerText = "✅ Skor berjaya dihantar!";
+        setTimeout(() => { loadLeaderboard(); }, 1500);
+      })
+      .catch(err => {
+        statusMsg.style.color = "#f87171";
+        statusMsg.innerText = "❌ Gagal hantar data.";
+      });
+    }
+
+    loadLeaderboard();
+  </script>
+</body>
+</html>
